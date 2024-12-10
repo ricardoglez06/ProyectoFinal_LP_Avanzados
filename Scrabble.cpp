@@ -7,15 +7,17 @@ void cambiarLetras(char letras[7]);
 void llenarTablero(char letras[7], char tablero[][15]);
 void imprimirLetras(char letras[7]);
 int contarPuntos(char letras[7], char letraIngresada);
+void tableroConPuntos(int tableroPuntaje[][15]);
 
 int main(){ 
     char letras[7];
     char tablero[15][15];
+    int tableroPuntaje[15][15];
     srand(time(NULL));
     for (int i=0; i<7; i++){ //llenar arr de letras random
         letras[i] = (rand() % (90-65+1))+65;
     }
-    for (int i=0; i<15; i++){ //declarar arreglo vacio
+    for (int i=0; i<15; i++){ //declarar arreglo vacio que es el tablero donde se pondrán las letras
         for (int j=0; j<15; j++){
             tablero[i][j]=' ';
         }
@@ -38,16 +40,31 @@ void imprimirTablero(char tablero[][15]){
     for (int i=0; i<15; i++){ //filas
         printf(" %c ",'A'+i); //letras filas
         for (int j=0; j<15; j++){ //columnas
-            if ((i+j)%2==0){ // intercalar colores
-                printf("\x1b[48;5;194m %c ", tablero[i][j]); 
-            }
-            else {
-                printf("\x1b[48;5;230m %c ", tablero[i][j]);
+            if(i==j){
+                printf("\x1b[48;5;159m %c ", tablero[i][j]); //diagonal para la izquierda
+            } else{
+                if(i+j==14){ //diagonal para la derecha
+                    printf("\x1b[48;5;159m %c ", tablero[i][j]);
+                } else{
+                    if((i==7) && (j==1 || j==3 || j==11 || j==13)){
+                        printf("\x1b[48;5;159m %c ", tablero[i][j]); // linea de en medio 
+                    } else{
+                        if(j==7 && (i==1 || i==3 || i==13 || i==11)){
+                            printf("\x1b[48;5;159m %c ", tablero[i][j]); // linea de en medio para abajo 
+                        } else{
+                            if ((i+j)%2==0){ // intercalar colores tipo ajedrez
+                                printf("\x1b[48;5;194m %c ", tablero[i][j]); 
+                            }
+                            else {
+                                printf("\x1b[48;5;230m %c ", tablero[i][j]);
+                            }
+                        }
+                    }
+                }
             }
         }
         printf("\x1b[0m\n");
     }
-    
 }
 
 void imprimirLetras(char letras[7]){
@@ -64,7 +81,6 @@ void cambiarLetras(char letras[7]){
             letras[i] = (rand() % (90-65+1))+65;
         }
     }
-
     do {
         printf("\n");
         imprimirLetras(letras); // llamar funcion para imprimir el tablero
@@ -94,12 +110,13 @@ void cambiarLetras(char letras[7]){
     }
 }
 
-void llenarTablero(char letras[7], char tablero[][15]){
+void llenarTablero(char letras[7], char tablero[][15], int tableroPuntaje[][15]){
     char letraIngresada;
-    int puntuacion[27] = {1,3,3,2,1,4,2,4,1,6,5,1,3,1,1,3,8,1,1,1,1,4,4,6,4,8};
-    int posFila, posColumn, turno=0, puntajeTotal=0;
-    for(int k=0; k<7; k++){ // for de 7 porque son 7 letras nada mas 
-        cambiarLetras(letras); //llamar funcion para cambiar las letras
+    int posFila, posColumn, turno=0;
+    //for(int k=0; k<7; k++){ // for de 7 porque son 7 letras nada mas 
+         //llamar funcion para cambiar las letras
+    while(turno!=20){
+        cambiarLetras(letras);
         do{
             imprimirLetras(letras); 
             printf("\nIngrese una letra, si quiere dejar de ingresar letras ingrese un punto (.): ");
@@ -128,11 +145,53 @@ void llenarTablero(char letras[7], char tablero[][15]){
                     tablero[posFila-1][posColumn-1]=letraIngresada; //acomodar la letra ingresada en la fila y columna seleccionada
                     imprimirTablero(tablero); //imprimir el tablero.
                     //parte de puntuacion
-                    puntajeTotal+=puntuacion[letraIngresada-65];
-                    
+                    contarPuntos(letraIngresada, posFila, posColumn, tableroPuntaje);
                 }
             }
-            printf("%d", puntajeTotal);
-        } while(1);
+        } while(letraIngresada!='.');
+        turno++;
     }
+}
+
+void tableroConPuntos(int tableroPuntaje[][15]){
+    srand(time(NULL));
+    char tablero[15][15];
+    for (int i=0; i<15; i++){ //filas
+        for (int j=0; j<15; j++){ //columnas
+            if(i==j){
+                    tablero[i][j]=rand()%(3-1+1)+1; //diagonal para la izquierda
+            } else{
+                if(i+j==14){ //diagonal para la derecha
+                    tablero[i][j]=rand()%(3-1+1)+1;
+                } else{
+                    if((i==7) && (j==1 || j==3 || j==11 || j==13)){
+                        tablero[i][j]=rand()%(3-1+1)+1; // linea de en medio 
+                    } else{
+                        if(j==7 && (i==1 || i==3 || i==13 || i==11)){
+                            tablero[i][j]=rand()%(3-1+1)+1; // linea de en medio para abajo 
+                        } else{
+                            if ((i+j)%2==0){ // intercalar colores tipo ajedrez
+                                tablero[i][j]=0;
+                            }
+                            else {
+                                tablero[i][j]=0;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+int contarPuntos(char letraIngresada, int posFila, int posColumn, int tableroPuntaje[][15]){
+    int puntuacion[27] = {1,3,3,2,1,4,2,4,1,6,5,1,3,1,1,3,8,1,1,1,1,4,4,6,4,8}; //A=1, B=3, C=3, D=2 etc.
+    int puntajeTotal=0;
+    if(tableroPuntaje[posFila-1][posColumn-1]==0){ //si en el tablero con los 
+        puntajeTotal+=puntuacion[letraIngresada-65];
+    }
+    else{
+        puntajeTotal+=(puntuacion[letraIngresada-65]*tableroPuntaje[posFila-1][posColumn-1]); // multiplicar x el numero que se declaró aleatoriamente
+    }
+
 }
