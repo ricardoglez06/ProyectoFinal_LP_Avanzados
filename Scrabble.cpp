@@ -1,20 +1,18 @@
+//CREADO POR:
+//*Erick Fernando Pérez Cruz
+//*Ángel Ricardo González Soto
+//*Valeria Alejandra Araujo Martínez
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 #include <ctype.h>
 #include <string.h>
 
-// doble letra YA, verificar diccionario, tablero color puntuacion YA, puntuacion x letra YA, 
-//matriz false con true en casillas cn puntos extra para poder multiplicarlos YA, 
-// arreglar loop infinito (usar solo letras) YA
-// verificar que tenga letra arriba,abajo,izq,derecha. Poner cordenadas cn numero/letra YA
-// limitar letras/numeros al ingresar fila columna (1-15) YA
-// si turno != 0 se puede poner letra donde sea YA.
-// duplicado al ingresar una letra en vez de numero de fila
-
 void imprimirTablero(char tablero[][15], int tableroPuntaje[][15]);
-void cambiarLetras(char letras[7], bool cambiosLet[7]);
+int cambiarLetras(char letras[7], bool cambiosLet[7]);
 bool palabraValida(char palabraIngresada[], char letras[7], int tamano, char tablero[][15], int posFila, int posColumn);
+bool diccionarioValid(char palabraAValidar[]);
 bool procesarOrientacion(int orientacion, char palabraIngresada[], char tablero[][15], int posFila, int posColumn, int tamano, int tableroPuntaje[][15], int turno);
 void llenarTablero(char letras[7], char tablero[][15], int tableroPuntaje[][15], bool cambiosLet[7]);
 void imprimirLetras(char letras[7], bool cambiosLet[7]);
@@ -109,7 +107,7 @@ void imprimirLetras(char letras[7], bool cambiosLet[7]){
     }
 }
 
-void cambiarLetras(char letras[7], bool cambiosLet[7]){
+int cambiarLetras(char letras[7], bool cambiosLet[7]){
     char letACamb;
     int posEncont, totCambios=0;
     
@@ -167,75 +165,167 @@ void cambiarLetras(char letras[7], bool cambiosLet[7]){
     for(int i=0; i<7; i++){ //volver a poner las banderas en false para el siguiente turno
         cambiosLet[i]=0;
     }
+
+    return totCambios;
 }
 
+// Función que valida si la palabra ingresada es válida, comparándola con las letras disponibles
+// y verificando que no se repitan letras de las disponibles.
+// Función que verifica si una palabra ingresada es válida dentro de un tablero de juego
 bool palabraValida(char palabraIngresada[], char letras[7], int tamano, char tablero[][15], int posFila, int posColumn, int orientacion){
+    // Arreglo que mantiene el control de las letras que ya han sido usadas (inicialmente todas en 0)
     int letrasUsadas[7] = {0,0,0,0,0,0,0};
+    // Contador que se utiliza para verificar que todas las letras coincidan
     int contador = 0;
 
+    // Recorre cada letra de la palabra ingresada
     for (int i=0; i<tamano; i++){
+        // Compara si la letra ingresada es igual a la letra de cruce para que el contador aumente aunque la letra que coincide no este en el mazo del usuario
+        switch (orientacion)
+        {
+            case 1: { // Orientación hacia arriba
+                if (tablero[posFila - 1 - i][posColumn - 1] == palabraIngresada[i]){
+                    contador++; // Si la letra coincide, se incrementa el contador
+                }
+                break;
+            }
+            case 2: { // Orientación hacia abajo
+                if (tablero[posFila - 1 + i][posColumn - 1] == palabraIngresada[i]){
+                    contador++; // Si la letra coincide, se incrementa el contador
+                }
+                break;
+            }
+            case 3: { // Orientación hacia la derecha
+                if (tablero[posFila - 1][posColumn - 1 + i] == palabraIngresada[i]){
+                    contador++; // Si la letra coincide, se incrementa el contador
+                }
+                break;
+            }
+            case 4: { // Orientación hacia la izquierda
+                if (tablero[posFila - 1][posColumn - 1 - i] == palabraIngresada[i]){
+                    contador++; // Si la letra coincide, se incrementa el contador
+                }
+                break;
+            }
+        }
+
+        // Verifica si la letra de la palabra ingresada está en las letras disponibles y no ha sido usada
         for (int j=0; j<7; j++){
             if (palabraIngresada[i] == letras[j] && letrasUsadas[j] == 0) {
-                contador++;
-                letrasUsadas[j] = 1;
-                letras[j] = ' ';
+                contador++; // Se incrementa el contador por la coincidencia
+                letrasUsadas[j] = 1; // Se marca la letra como usada
+                letras[j] = ' '; // Se elimina la letra del arreglo de letras disponibles
                 break;
             }
         }
     }
 
+    // Si el contador no es igual al tamaño de la palabra, significa que no todas las letras coincidieron
     if (contador != tamano){
-        return false;
+        return false; // La palabra no es válida
     } else {
-        return true;
+        return true; // La palabra es válida
     }
 }
 
+
+
+bool diccionarioValid(char palabraAValidar[]){
+    char linea[100];  // Buffer para leer cada palabra del archivo
+    bool encontrada;  // Variable para indicar si la palabra se encontró
+
+    // Convertir palabraAValidar a minúsculas para comparación
+    for (int i = 0; palabraAValidar[i] != '\0'; i++) {
+        palabraAValidar[i] = tolower(palabraAValidar[i]);  // Convierte cada letra a minúsculas
+    }
+
+    // Abrir el archivo del diccionario
+    FILE *fp = fopen("C:\\Users\\Ricardoo\\OneDrive\\Desktop\\ProyectoGithub\\diccionario_filtrado.txt", "r"); //Cambiar por la ruta del diccionario donde lo tiene el usuario
+    if (fp == NULL) {
+        printf("\033[31mError al abrir el archivo. ASEGURATE DE PONER CORRECTAMENTE LA RUTA DEL DICCIONARIO\033[0m\n");  // Si no se puede abrir el archivo, muestra un error
+        return 1;  // Salir con código de error
+    } 
+
+    // Leer el archivo palabra por palabra usando fscanf
+    while (fscanf(fp, "%s", linea) != EOF) {
+        // Limpiar el salto de línea al final de la palabra leída
+        linea[strcspn(linea, "\n")] = '\0';  // Eliminar salto de línea si está presente
+
+        // Comparar la palabra leída con la palabra ingresada
+        if (strcmp(linea, palabraAValidar) == 0) {
+            encontrada = true;  // Se encuentra la palabra
+            break;  // Salir del bucle al encontrar la palabra
+        }
+    }
+
+    // Cerrar el archivo después de la lectura
+    fclose(fp);
+
+    // Mostrar el resultado de la búsqueda
+    if (encontrada) {
+        printf("\033[32mLa palabra '%s' SI EXISTE en el diccionario.\033[0m\n", palabraAValidar);
+        return true;  // Retorna true si la palabra fue encontrada
+    } else {
+        printf("\033[32mLa palabra '%s' NO EXISTE en el diccionario.\033[0m\n", palabraAValidar);
+        return false;  // Retorna false si la palabra no fue encontrada
+    }
+}
+
+// Función que maneja la colocación de la palabra según la orientación y la posición en el tablero.
 bool procesarOrientacion(int orientacion, char palabraIngresada[], char tablero[][15], int posFila, int posColumn, int tamano, int tableroPuntaje[][15], int turno) {
-    bool movCorrecto = true, extensionPalabra = false;
-    char auxPalabra[15] = "", palabraExtendida[15] = "", palabraAValidar[15] = "";
-    int puntos, totalPuntos, letrasDescruzadas=0;
+    bool movCorrecto = true, extensionPalabra = false; // Variables para verificar si el movimiento es correcto y si hay una extensión de palabra
+    char auxPalabra[15] = "", palabraExtendida[15] = "", palabraAValidar[15] = ""; // Variables para manipular las palabras
+    int puntos, totalPuntos, letrasDescruzadas=0; // Variables para el puntaje y el conteo de letras descruzadas
 
     switch (orientacion) {
         case 1: { // Hacia arriba
-            if (posFila - tamano < 0) {
+            if (posFila - tamano < 0) { // Verifica si la palabra se sale del tablero hacia arriba
                 printf("\033[1;31m\nError: La palabra se sale del tablero hacia arriba.\n\033[0m");
                 return false;
             }
+            // Verifica si ya hay palabras en la posición donde se quiere colocar la nueva palabra
             if (tablero[posFila][posColumn - 1] != ' ') {
                 extensionPalabra = true;
                 strcpy(auxPalabra, palabraIngresada);
 
+                // Extiende la palabra si ya hay una palabra en la dirección opuesta
                 for (int i = 1; tablero[posFila - 1 + i][posColumn - 1] != ' '; i++) {
                     palabraExtendida[i - 1] = tablero[posFila - 1 + i][posColumn - 1];
                 }
-                strcpy(palabraExtendida, strrev(palabraExtendida));
-                strcat(palabraExtendida, auxPalabra);
+                strcpy(palabraExtendida, strrev(palabraExtendida)); // Reversa la palabra extendida
+                strcat(palabraExtendida, auxPalabra); // Concatenar la palabra original
                 strcpy(palabraAValidar, palabraExtendida);
             } else {
                 strcpy(palabraAValidar, palabraIngresada);
             }
 
+            if (!diccionarioValid(palabraAValidar)){
+                return false;
+            }
+
+            // Verifica que la palabra que se va a colocar coincida con el tablero existente
             for (int i = 0; i < tamano; i++) {
                 if (tablero[posFila - 1 - i][posColumn - 1] == ' '){
-                    letrasDescruzadas++;
+                    letrasDescruzadas++; // Cuenta las letras descruzadas
                 }
                 if (tablero[posFila - 1 - i][posColumn - 1] != ' ' && tablero[posFila - 1 - i][posColumn - 1] != palabraIngresada[i]) {
-                    movCorrecto = false;
+                    movCorrecto = false; // Si no coincide, el movimiento no es correcto
                     break;
                 } 
             }
 
-            if (letrasDescruzadas==tamano && !extensionPalabra && turno!=0){
+            // Si no hay cruce y la palabra no es extensión, muestra un error
+            if (letrasDescruzadas == tamano && !extensionPalabra && turno != 0){
                 printf("\033[1;31m\nLa palabra debe estar cruzada con otra\n\033[0m");
                 return false;
             }
 
+            // Si el movimiento es correcto, coloca la palabra en el tablero
             if (movCorrecto) {
                 for (int i = 0; i < tamano; i++) {
-                    tablero[posFila - 1 - i][posColumn - 1] = palabraIngresada[i];
-                    puntos = contarPuntos(palabraIngresada[i], posFila, posColumn, tableroPuntaje);
-                    totalPuntos += puntos;
+                    tablero[posFila - 1 - i][posColumn - 1] = palabraIngresada[i]; // Coloca la palabra
+                    puntos = contarPuntos(palabraIngresada[i], posFila, posColumn, tableroPuntaje); // Calcula los puntos
+                    totalPuntos += puntos; // Suma los puntos
                 }
                 return true;
             } else {
@@ -245,10 +335,11 @@ bool procesarOrientacion(int orientacion, char palabraIngresada[], char tablero[
             break;
         }
         case 2: { // Hacia abajo
-            if (posFila + tamano > 16) {
+            if (posFila + tamano > 16) { // Verifica si la palabra se sale del tablero hacia abajo
                 printf("\033[1;31m\nError: La palabra se sale del tablero hacia abajo.\n\033[0m");
                 return false;
             }
+            // Similar al caso hacia arriba, verifica y maneja la extensión de palabras hacia abajo
             if (tablero[posFila - 2][posColumn - 1] != ' ') {
                 extensionPalabra = true;
                 strcpy(auxPalabra, palabraIngresada);
@@ -262,26 +353,33 @@ bool procesarOrientacion(int orientacion, char palabraIngresada[], char tablero[
             } else {
                 strcpy(palabraAValidar, palabraIngresada);
             }
+
+            if (!diccionarioValid(palabraAValidar)){
+                return false;
+            } 
+
+            // Verificación de la colocación correcta
             for (int i = 0; i < tamano; i++) {
                 if (tablero[posFila - 1 + i][posColumn - 1] == ' '){
-                    letrasDescruzadas++;
+                    letrasDescruzadas++; // Cuenta las letras descruzadas
                 }
                 if (tablero[posFila - 1 + i][posColumn - 1] != ' ' && tablero[posFila - 1 + i][posColumn - 1] != palabraIngresada[i]) {
-                    movCorrecto = false;
+                    movCorrecto = false; // Si no coincide, el movimiento no es correcto
                     break;
                 }
             }
 
-            if (letrasDescruzadas==tamano && !extensionPalabra && turno!=0){
+            // Maneja errores similares al caso anterior
+            if (letrasDescruzadas == tamano && !extensionPalabra && turno != 0){
                 printf("\033[1;31m\nLa palabra debe estar cruzada con otra\n\033[0m");
                 return false;
             }
 
             if (movCorrecto) {
                 for (int i = 0; i < tamano; i++) {
-                    tablero[posFila - 1 + i][posColumn - 1] = palabraIngresada[i];
-                    puntos = contarPuntos(palabraIngresada[i], posFila, posColumn, tableroPuntaje);
-                    totalPuntos += puntos;
+                    tablero[posFila - 1 + i][posColumn - 1] = palabraIngresada[i]; // Coloca la palabra en el tablero
+                    puntos = contarPuntos(palabraIngresada[i], posFila, posColumn, tableroPuntaje); // Calcula los puntos
+                    totalPuntos += puntos; // Suma los puntos
                 }
                 return true;
             } else {
@@ -291,10 +389,11 @@ bool procesarOrientacion(int orientacion, char palabraIngresada[], char tablero[
             break;
         }
         case 3: { // Hacia la derecha
-            if (posColumn + tamano > 16) {
+            if (posColumn + tamano > 16) { // Verifica si la palabra se sale del tablero hacia la derecha
                 printf("\033[1;31m\nError: La palabra se sale del tablero hacia la derecha.\n\033[0m");
                 return false;
             }
+            // Similar a los casos anteriores, verifica la colocación de palabras hacia la derecha
             if (tablero[posFila - 1][posColumn - 2] != ' ') {
                 extensionPalabra = true;
                 strcpy(auxPalabra, palabraIngresada);
@@ -308,27 +407,31 @@ bool procesarOrientacion(int orientacion, char palabraIngresada[], char tablero[
             } else {
                 strcpy(palabraAValidar, palabraIngresada);
             }
+            
+            if (!diccionarioValid(palabraAValidar)){
+                return false;
+            } 
 
             for (int i = 0; i < tamano; i++) {
                 if (tablero[posFila - 1][posColumn - 1 + i] == ' '){
-                    letrasDescruzadas++;
+                    letrasDescruzadas++; // Cuenta las letras descruzadas
                 }
                 if (tablero[posFila - 1][posColumn - 1 + i] != ' ' && tablero[posFila - 1][posColumn - 1 + i] != palabraIngresada[i]) {
-                    movCorrecto = false;
+                    movCorrecto = false; // Si no coincide, el movimiento no es correcto
                     break;
                 }
             }
 
-            if (letrasDescruzadas==tamano && !extensionPalabra && turno!=0){
+            if (letrasDescruzadas == tamano && !extensionPalabra && turno != 0){
                 printf("\033[1;31m\nLa palabra debe estar cruzada con otra\n\033[0m");
                 return false;
             }
 
             if (movCorrecto) {
                 for (int i = 0; i < tamano; i++) {
-                    tablero[posFila - 1][posColumn - 1 + i] = palabraIngresada[i];
-                    puntos = contarPuntos(palabraIngresada[i], posFila, posColumn, tableroPuntaje);
-                    totalPuntos += puntos;
+                    tablero[posFila - 1][posColumn - 1 + i] = palabraIngresada[i]; // Coloca la palabra en el tablero
+                    puntos = contarPuntos(palabraIngresada[i], posFila, posColumn, tableroPuntaje); // Calcula los puntos
+                    totalPuntos += puntos; // Suma los puntos
                 }
                 return true;
             } else {
@@ -338,10 +441,11 @@ bool procesarOrientacion(int orientacion, char palabraIngresada[], char tablero[
             break;
         }
         case 4: { // Hacia la izquierda
-            if (posColumn - tamano < 0) {
+            if (posColumn - tamano < 0) { // Verifica si la palabra se sale del tablero hacia la izquierda
                 printf("\033[1;31m\nError: La palabra se sale del tablero hacia la izquierda.\n\033[0m");
                 return false;
             }
+            // Similar a los casos anteriores, maneja la colocación de palabras hacia la izquierda
             if (tablero[posFila - 1][posColumn] != ' ') {
                 extensionPalabra = true;
                 strcpy(auxPalabra, palabraIngresada);
@@ -355,26 +459,31 @@ bool procesarOrientacion(int orientacion, char palabraIngresada[], char tablero[
             } else {
                 strcpy(palabraAValidar, palabraIngresada);
             }
+
+            if (!diccionarioValid(palabraAValidar)){
+                return false;
+            } 
+
             for (int i = 0; i < tamano; i++) {
                 if (tablero[posFila - 1][posColumn - 1 - i] == ' '){
-                    letrasDescruzadas++;
+                    letrasDescruzadas++; // Cuenta las letras descruzadas
                 }
                 if (tablero[posFila - 1][posColumn - 1 - i] != ' ' && tablero[posFila - 1][posColumn - 1 - i] != palabraIngresada[i]) {
-                    movCorrecto = false;
+                    movCorrecto = false; // Si no coincide, el movimiento no es correcto
                     break;
                 }
             }
 
-            if (letrasDescruzadas == tamano && !extensionPalabra && turno!=0){
+            if (letrasDescruzadas == tamano && !extensionPalabra && turno != 0){
                 printf("\033[1;31m\nLa palabra debe estar cruzada con otra\n\033[0m");
                 return false;
             }
-            
+
             if (movCorrecto) {
                 for (int i = 0; i < tamano; i++) {
-                    tablero[posFila - 1][posColumn - 1 - i] = palabraIngresada[i];
-                    puntos = contarPuntos(palabraIngresada[i], posFila, posColumn, tableroPuntaje);
-                    totalPuntos += puntos;
+                    tablero[posFila - 1][posColumn - 1 - i] = palabraIngresada[i]; // Coloca la palabra en el tablero
+                    puntos = contarPuntos(palabraIngresada[i], posFila, posColumn, tableroPuntaje); // Calcula los puntos
+                    totalPuntos += puntos; // Suma los puntos
                 }
                 return true;
             } else {
@@ -384,133 +493,159 @@ bool procesarOrientacion(int orientacion, char palabraIngresada[], char tablero[
             break;
         }
     }
+    return false; // En caso de no coincidir ninguna orientación
 }
 
 
-void llenarTablero(char letras[7], char tablero[][15], int tableroPuntaje[][15], bool cambiosLet[7]){
-    char palabraIngresada[15], auxFila, auxLetras[7];
-    int posColumn, posFila, turno=0, puntos, totalPuntos, tamano, orientacion;
-    bool inputValido;
+// Función para llenar el tablero con las palabras ingresadas por los jugadores
+void llenarTablero(char letras[7], char tablero[][15], int tableroPuntaje[][15], bool cambiosLet[7]) {
+    char palabraIngresada[15], auxFila, auxLetras[7], opcion; // Variables para almacenar la palabra ingresada y la fila seleccionada
+    int posColumn, posFila, turno = 0, puntos, totalPuntos, tamano, orientacion; // Variables para la posición, puntos y orientación
+    bool inputValido; // Variable para validar la entrada
 
-    while(turno<=15){
-        inputValido = true;
+    printf("\033[31mPARA QUE EL JUEGO SE EJECUTE CORRECTAMENTE ES NECESARIO QUE LA RUTA DEL DICCIONARIO ESTE PUESTA CORRECTAMENTE\033[0m\n");  
+    //Advertencia para que sobre la llamada al archivo del diccionario
 
+    // Bucle principal que se ejecuta hasta que se alcancen los 15 turnos
+    while(turno <= 15) {
+        inputValido = true; // Inicializa la validez de la entrada
+
+        // Muestra el turno y actualiza las letras del jugador
         printf("\033[1;34mTurno: %d\033[0m\n", turno);
-        cambiarLetras(letras, cambiosLet);
-        imprimirTablero(tablero, tableroPuntaje);
+
+        int cambiosLetras = cambiarLetras(letras, cambiosLet); // Cambia las letras del jugador
+
+        if (cambiosLetras == 7){
+            // Ofrecer al usuario la opción de cambiar todo el mazo
+            printf("\033[1;33m¿Quieres perder un turno para cambiar todas tus letras? Ingresa 'S' para Si, cualquier otra letra para No: \033[0m");
+            scanf(" %c", &opcion);
+            opcion = toupper(opcion);
+
+            if (opcion == 'S' || opcion == 's') {
+                for (int i = 0; i < 7; i++) {
+                    letras[i] = (rand() % (90 - 65 + 1)) + 65; // Generar nuevas letras aleatorias
+                }
+                printf("\033[1;32mHas cambiado todas tus letras y perdido un turno (estara reflejado en el sig turno).\033[0m\n");
+            }
+        }
+
+        // Ingreso de palabra en el tablero
+        bool resOrientacion = false; // Inicializado en false, porque aún no se ha validado.
 
         do {
+            imprimirTablero(tablero, tableroPuntaje); // Imprime el estado actual del tablero
             printf("\033[1;33mINGRESO DE PALABRA\033[0m\n");
             printf("\033[1;32mInstrucciones:\033[0m\n");
             printf("\033[1;33m---Si vas a cruzar una palabra, ingresa la palabra completa (aunque la letra donde se va a hacer el cruce no la tengas en tu mazo de letras)\033[0m\n");
             printf("\033[1;33m---Si vas a hacer una extension de palabra, solo ingresa la parte extendida, NO la palabra completa\033[0m\n");
             printf("\033[1;33m---Si es el primer turno, simplemente ingresa la palabra que deseas\033[0m\n");
-            imprimirLetras(letras, cambiosLet); 
+            imprimirLetras(letras, cambiosLet); // Muestra las letras disponibles
 
-            printf("\n\033[1;31m~Si no tiene letras con las que formar una palabra valida, ingrese 'R' para revolver todo su mazo de letras, sino ingrese cualquier otra tecla~\033[0m\n");
-            printf("\033[1;31mPRECAUCION: Al hacer esto perderá un turno\033[0m\n");
-
-            // Limpiar el buffer y leer la decisión
-            char decision;
-            scanf(" %c", &decision);  // Espacio antes de %c para evitar leer un salto de línea residual
-            while (getchar() != '\n');  // Limpiar el buffer de entrada
-
-            if (decision == 'R' || decision == 'r') {
-                for (int i=0; i<7; i++){
-                    letras[i] = ' ';
-                }
-                continue;  // Revolver el mazo de letras y perder turno
-            }
-
-            for (int i=0; i<7; i++){
+            // Guarda las letras actuales para restaurarlas en caso de error
+            for (int i = 0; i < 7; i++) {
                 auxLetras[i] = letras[i];
             }
 
+            // Solicita la palabra que el jugador quiere ingresar
             printf("\n\033[1;36m¿Cual palabra quiere ingresar en el tablero? \033[0m\n");
             while (getchar() != '\n'); // Limpiar el buffer
-            gets(palabraIngresada);
-            tamano = strlen(palabraIngresada);
+            gets(palabraIngresada); // Leer la palabra ingresada
+            tamano = strlen(palabraIngresada); // Obtener el tamaño de la palabra
 
-            if (tamano > 8){
+            // Verifica que la palabra no sea mayor de 8 letras
+            if (tamano > 8) {
                 printf("\033[1;31mIngresa palabras de 8 letras o menos\033[0m\n");
-                turno--;
+                turno--; // Reduce el turno en caso de error
                 continue;
             }
 
-            for (int i=0; i<tamano; i++){
-                if(!isalpha(palabraIngresada[i])){
+            // Verifica que la palabra esté compuesta solo por letras
+            for (int i = 0; i < tamano; i++) {
+                if (!isalpha(palabraIngresada[i])) {
                     printf("\033[1;31mIngresa unicamente letras\033[0m\n");
-                    inputValido = false;
+                    inputValido = false; // Marca la entrada como inválida
                     break;
                 } else {
-                    palabraIngresada[i] = toupper(palabraIngresada[i]);
+                    palabraIngresada[i] = toupper(palabraIngresada[i]); // Convierte la palabra a mayúsculas
                 }
             }
 
-            if (!inputValido){
+            // Si la entrada es inválida, se resta el turno y se reinicia el ciclo
+            if (!inputValido) {
                 turno--;
                 continue;
-            } 
-            
-            if (turno == 0){
+            }
+
+            // Si es el primer turno, configura la posición inicial y orientación predeterminada
+            if (turno == 0) {
                 auxFila = 'H';
-                posFila = auxFila - 64;
-                posColumn = 8;
-                orientacion = 3;
+                posFila = auxFila - 64; // Convierte la letra a número (A = 1, B = 2, ...)
+                posColumn = 8; // Coloca la palabra en la columna central
+                orientacion = 3; // Orientación hacia la derecha
             } else {
+                // Solicita la fila y columna donde se colocará la primera letra
                 printf("\033[1;32mIngrese la LETRA de la FILA donde pondrá la PRIMERA letra: \033[0m\n");
                 scanf(" %c", &auxFila);
-                auxFila = toupper(auxFila);
-                posFila = auxFila - 64;
-                if(!isalpha(auxFila) || auxFila > 'O'){ //verificar que si sea letra y esté en el tablero
+                auxFila = toupper(auxFila); // Convierte la letra a mayúsculas
+                posFila = auxFila - 64; // Convierte la letra a número
+                if (!isalpha(auxFila) || auxFila > 'O') { // Verifica que la fila esté dentro del tablero
                     printf("\033[1;31m\nLETRA de fila inválida.\033[0m\n\n");
-                    inputValido = false;
+                    inputValido = false; // Marca la entrada como inválida
                     turno--;
                     continue;
                 }
 
+                // Solicita el número de la columna
                 printf("\033[1;32mIngrese el NÚMERO de la COLUMNA donde pondrá la PRIMERA letra: \033[0m\n");
                 scanf(" %d", &posColumn);
-                if(posColumn<1 || posColumn>15){
+                if (posColumn < 1 || posColumn > 15) { // Verifica que la columna esté dentro del tablero
                     printf("\033[1;31m\nNÚMERO de columna inválido.\033[0m\n\n");
-                    inputValido = false;
+                    inputValido = false; // Marca la entrada como inválida
                     turno--;
                     continue;
                 }
 
+                // Solicita la orientación de la palabra
                 printf("\033[1;36mELIGE EL NUMERO DE LA ORIENTACION QUE QUIERE: \033[0m");
                 printf("\n'1' - La palabra va hacia arriba\n'2' - La palabra va hacia abajo\n'3' - La palabra va hacia la derecha\n'4' La palabra va hacia la izquierda\n");
                 scanf("%d", &orientacion);
             }
 
-            if (!palabraValida(palabraIngresada, letras, tamano, tablero, posFila, posColumn, orientacion)){
-                printf("\033[1;31m\nIngresa una palabra con las letras disponibles\n\033[0m");
-                printf("\033[1;33mO si es que quieres cruzar la palabra con otra ya existente, ingresa toda la palabra aun cuando no tengas en el mazo la letra que vas a cruzar\033[0m\n");
-                for (int i=0; i<7; i++){
-                    letras[i] = auxLetras[i];
+            // Verifica que la palabra sea válida con las letras disponibles
+            if (!palabraValida(palabraIngresada, letras, tamano, tablero, posFila, posColumn, orientacion)) {
+                printf("\033[1;31m\nPalabra invalida\n\033[0m");
+                for (int i = 0; i < 7; i++) {
+                    letras[i] = auxLetras[i]; // Restaura las letras del jugador
                 }
-                
-                turno--;
-                continue;
-            } 
-        
-            procesarOrientacion(orientacion, palabraIngresada, tablero, posFila, posColumn, tamano, tableroPuntaje, turno);
 
-            if (!procesarOrientacion(orientacion, palabraIngresada, tablero, posFila, posColumn, tamano, tableroPuntaje, turno)){
-                for (int i=0; i<7; i++){
-                    letras[i] = auxLetras[i];
-                }
-                turno--;
+                turno--; // Reduce el turno en caso de error
                 continue;
             }
-        } while (!inputValido || !procesarOrientacion);
 
-        imprimirTablero(tablero, tableroPuntaje); // Imprime el tablero
+            // Procesa la orientación de la palabra en el tablero
+            resOrientacion = procesarOrientacion(orientacion, palabraIngresada, tablero, posFila, posColumn, tamano, tableroPuntaje, turno);
+
+            // Verifica si el procesamiento de la palabra fue exitoso
+            if (!resOrientacion) {
+                for (int i = 0; i < 7; i++) {
+                    letras[i] = auxLetras[i]; // Restaura las letras del jugador
+                }
+                turno--; // Reduce el turno en caso de error
+                continue;
+            }
+        } while (!inputValido || !resOrientacion); // Repite si la entrada es inválida o el procesamiento falla
+
+        imprimirTablero(tablero, tableroPuntaje); // Imprime el tablero después de cada turno
         printf("\n");
 
-        turno++; 
+        turno++; // Incrementa el turno
+        if (opcion == 'S' || opcion == 's') {
+            turno++;
+            continue; // Saltar al siguiente turno
+        }
     }
 
+    // Mensaje final cuando se terminan los turnos
     printf("\n\n\033[1;32mEl juego se ha terminado porque se te acabaron los turnos.\033[0m\n");
 }
 
