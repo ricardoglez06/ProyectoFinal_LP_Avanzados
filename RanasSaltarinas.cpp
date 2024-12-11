@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <stdbool.h>
 #include <string.h>
+#include <ctype.h>
 
 bool comparar(char pos[], char objetivo[], int tamano); // Declarar prototipos de funciones
 void llenarArreglo(char pos[], char objetivo[], int tamano);
@@ -11,7 +12,11 @@ int juegoFuncion(char pos[], char objetivo[], int tamano);
 int main(){
     int tamano;
     printf("\x1b[38;5;147m¿Cuantas ranas de cada color quieres para esta juego? (1-7): "); // Preguntar al usuario el tamaño del tablero del juego
-    scanf("%d", &tamano);
+    if (scanf("%d", &tamano) != 1) { // scanf rana !=1 para verificar que sea un número, si es diferente de 1, significa que el scanf no leyó correctamente, por lo tanto, no es número
+        while (getchar() != '\n'); // Limpiar buffer
+        printf("\x1b[38;5;9mSolo puedes ingresar números.\x1b[0m\n");
+        return false;
+    }
     
     tamano = tamano*2+1; //Calcular el tamano total del tablero
     char pos[tamano], objetivo[tamano]; // Declarar arreglos, uno inicial y otro final para evaluar el ciclo 
@@ -54,21 +59,21 @@ int main(){
         }
 
         // Imprimir tabla de puntajes
-        printf("    \x1b[38;5;249mTABLA DE SCORES\n");
-        printf("-----------------------\n");
-        printf("Nombre\t\tPuntaje\n\n");
+        printf("    \x1b[38;5;249mTABLA DE SCORES\x1b[0m\n");
+        printf("\x1b[38;5;39m-----------------------\x1b[0m\n");
+        printf("\x1b[38;5;26mNombre\x1b[0m\t\t\x1b[38;5;75mPuntaje\x1b[0m\n\n");
 
         for (int j=0; j<=contador; j++){ // for para imprimir la tabla de scores
-            printf("%s", usuarios[j]);
+            printf("\x1b[38;5;207m%s\x1b[0m", usuarios[j]);
 
             if (strlen(usuarios[j]) <= 7){ // if para que los puntajes queden alineados aun cuando el nombre sea corto
-                printf("\t\t%d\n", scores[j]);
+                printf("\t\t\x1b[38;5;213m%d\x1b[0m\n", scores[j]);
             } else {
-                printf("\t%d\n", scores[j]);
+                printf("\t\x1b[38;5;213m%d\x1b[0m\n", scores[j]);
             }
         }
 
-        printf("\n\x1b[38;5;9m¿Quieres terminar el juego? Ingresa 0 si así lo deseas, sino ingresa cualquier otro numero.\n");
+        printf("\n\x1b[38;5;9m¿Quieres terminar el juego? Ingresa 0 o cualquier letra si así lo deseas, sino ingresa cualquier otro numero.\x1b[0m\n");
         scanf("%d", &decision);
 
         contador++; // Incrementar el número de partidas jugadas
@@ -162,10 +167,13 @@ int juegoFuncion(char pos[], char objetivo[], int tamano){ // Funcion para mover
     int rana, intentos=0;
     do{
         imprimirRanas(pos, tamano);
-        printf("\n\nElige posicion (1-%d): ",tamano); // Elegir la casilla de la rana a cambiar
-        scanf("%d", &rana);
+        printf("\n\n\x1b[38;5;215mElige posicion (1-%d): \x1b[0m",tamano); // Elegir la casilla de la rana a cambiar
+        if (scanf("%d", &rana) != 1) { // scanf rana !=1 para verificar que sea un número, si es diferente de 1, significa que el scanf no leyó correctamente, por lo tanto, no es número
+            while (getchar() != '\n'); // Limpiar buffer
+            printf("\x1b[38;5;9mSolo puedes ingresar números.\x1b[0m\n");
+            continue;
+        }
         rana--; // Restarle 1 a la casilla de la rana ingresada para que coincida con la posicion del arreglo
-
         if (pos[rana+1] == ' '){ // Verificar que exista un espacio en la siguiente posicion de la rana ingresada
             pos[rana+1] = pos[rana]; // Si hay espacio, asignar el valor de la posicion de la rana ingresada a la siguiente posicion
             pos[rana] = ' '; // Asignar el espacio nuevamente en la casilla ingresada ya que fue reemplazado por el valor de la rana ingresada
@@ -189,11 +197,10 @@ int juegoFuncion(char pos[], char objetivo[], int tamano){ // Funcion para mover
         else { 
             printf("Movimiento invalido\n"); // Cualquier otro movimiento va a ser invalido
         }
-    }
-    while (!comparar(pos, objetivo, tamano));
+    } while (!comparar(pos, objetivo, tamano));
     
     imprimirRanas(pos, tamano);
     printf("\nHas ganado en %d intentos.\n\n", intentos); 
 
-    return intentos; // Devuelve el valor de intentos para almacenarlo en scores
+    return intentos;
 }
