@@ -10,11 +10,11 @@
 #include <string.h>
 
 void imprimirTablero(char tablero[][15], int tableroPuntaje[][15]);
-int cambiarLetras(char letras[7], bool cambiosLet[7]);
+int cambiarLetras(char letras[7], bool cambiosLet[7], char vocales[]);
 bool palabraValida(char palabraIngresada[], char letras[7], int tamano, char tablero[][15], int posFila, int posColumn);
 bool diccionarioValid(char palabraAValidar[]);
 bool procesarOrientacion(int orientacion, char palabraIngresada[], char tablero[][15], int posFila, int posColumn, int tamano, int tableroPuntaje[][15], int turno);
-void llenarTablero(char letras[7], char tablero[][15], int tableroPuntaje[][15], bool cambiosLet[7]);
+void llenarTablero(char letras[7], char tablero[][15], int tableroPuntaje[][15], bool cambiosLet[7], char vocales[]);
 void imprimirLetras(char letras[7], bool cambiosLet[7]);
 int contarPuntos(char letraIngresada, int posFila, int posColumn, int tableroPuntaje[][15]);
 void tableroConPuntos(int tableroPuntaje[][15]);
@@ -24,9 +24,16 @@ int main(){
     char tablero[15][15];
     int tableroPuntaje[15][15];
     bool cambiosLet[7] = {0,0,0,0,0,0,0}; //flag para que solo pueda cambiar una vez la letra por turno
+    char vocales[] = {'A','E','I','O','U'};
     srand(time(NULL));
     for (int i=0; i<7; i++){ //llenar arr de letras random
-        letras[i] = (rand() % (90-65+1))+65;
+        int auxPorcentaje;
+        auxPorcentaje = rand()%11;
+        if(auxPorcentaje>3){
+            letras[i] = (rand() % (90-65+1))+65; //todas las letras
+        } else{
+            letras[i] = vocales[rand()%5]; //solo vocales
+        }
     }
     for (int i=0; i<15; i++){ //declarar arreglo vacio que es el tablero donde se pondrán las letras
         for (int j=0; j<15; j++){
@@ -34,7 +41,7 @@ int main(){
         }
     }
     tableroConPuntos(tableroPuntaje);
-    llenarTablero(letras, tablero, tableroPuntaje, cambiosLet);
+    llenarTablero(letras, tablero, tableroPuntaje, cambiosLet, vocales);
     
 }
 
@@ -107,7 +114,7 @@ void imprimirLetras(char letras[7], bool cambiosLet[7]){
     }
 }
 
-int cambiarLetras(char letras[7], bool cambiosLet[7]){
+int cambiarLetras(char letras[7], bool cambiosLet[7], char vocales[]){
     char letACamb;
     int posEncont, totCambios=0;
     
@@ -142,7 +149,13 @@ int cambiarLetras(char letras[7], bool cambiosLet[7]){
                 for (int i=0; i<7; i++){ //recorrer el las 7 letras
                     if (letras[i]==letACamb){ // si la letra ingresada existe
                         if (cambiosLet[i]==0){ // y si no se ha cambiado
-                            letras[i] = rand()%(90-65+1)+65; // cambia la letra
+                            int auxPorcentaje;
+                            auxPorcentaje = rand()%11;
+                            if(auxPorcentaje>3){
+                                letras[i] = (rand() % (90-65+1))+65; //todas las letras
+                            } else{
+                                letras[i] = vocales[rand()%5]; //solo vocales
+                            }
                             cambiosLet[i] = 1; // y pone true para que no se pueda cambiar de nuevo
                             totCambios++; // suma total de cambios
                             printf("\nLa letra \x1b[38;5;33m%c\x1b[0m ha cambiado a \x1b[38;5;33m%c\x1b[0m\n\n",letACamb, letras[i]);
@@ -327,6 +340,7 @@ bool procesarOrientacion(int orientacion, char palabraIngresada[], char tablero[
                     puntos = contarPuntos(palabraIngresada[i], posFila, posColumn, tableroPuntaje); // Calcula los puntos
                     totalPuntos += puntos; // Suma los puntos
                 }
+                printf("\033[1;33mLLevas %d puntos acumulados \n\033[0m", totalPuntos);
                 return true;
             } else {
                 printf("\033[1;31m\nLa palabra no puede ser colocada en esa posición porque no coincide con la palabra existente.\n\n\033[0m");
@@ -381,6 +395,7 @@ bool procesarOrientacion(int orientacion, char palabraIngresada[], char tablero[
                     puntos = contarPuntos(palabraIngresada[i], posFila, posColumn, tableroPuntaje); // Calcula los puntos
                     totalPuntos += puntos; // Suma los puntos
                 }
+                printf("\033[1;33mLLevas %d puntos acumulados \n\033[0m", totalPuntos);
                 return true;
             } else {
                 printf("\033[1;31m\nLa palabra no puede ser colocada en esa posición porque no coincide con la palabra existente.\n\n\033[0m");
@@ -433,6 +448,7 @@ bool procesarOrientacion(int orientacion, char palabraIngresada[], char tablero[
                     puntos = contarPuntos(palabraIngresada[i], posFila, posColumn, tableroPuntaje); // Calcula los puntos
                     totalPuntos += puntos; // Suma los puntos
                 }
+                printf("\033[1;33mLLevas %d puntos acumulados \n\033[0m", totalPuntos);
                 return true;
             } else {
                 printf("\033[1;31m\nLa palabra no puede ser colocada en esa posición porque no coincide con la palabra existente.\n\n\033[0m");
@@ -485,6 +501,7 @@ bool procesarOrientacion(int orientacion, char palabraIngresada[], char tablero[
                     puntos = contarPuntos(palabraIngresada[i], posFila, posColumn, tableroPuntaje); // Calcula los puntos
                     totalPuntos += puntos; // Suma los puntos
                 }
+                printf("\033[1;33mLLevas %d puntos acumulados \n\033[0m", totalPuntos);
                 return true;
             } else {
                 printf("\033[1;31m\nLa palabra no puede ser colocada en esa posición porque no coincide con la palabra existente.\n\n\033[0m");
@@ -498,7 +515,7 @@ bool procesarOrientacion(int orientacion, char palabraIngresada[], char tablero[
 
 
 // Función para llenar el tablero con las palabras ingresadas por los jugadores
-void llenarTablero(char letras[7], char tablero[][15], int tableroPuntaje[][15], bool cambiosLet[7]) {
+void llenarTablero(char letras[7], char tablero[][15], int tableroPuntaje[][15], bool cambiosLet[7], char vocales[]) {
     char palabraIngresada[15], auxFila, auxLetras[7], opcion; // Variables para almacenar la palabra ingresada y la fila seleccionada
     int posColumn, posFila, turno = 0, puntos, totalPuntos, tamano, orientacion; // Variables para la posición, puntos y orientación
     bool inputValido; // Variable para validar la entrada
@@ -513,7 +530,7 @@ void llenarTablero(char letras[7], char tablero[][15], int tableroPuntaje[][15],
         // Muestra el turno y actualiza las letras del jugador
         printf("\033[1;34mTurno: %d\033[0m\n", turno);
 
-        int cambiosLetras = cambiarLetras(letras, cambiosLet); // Cambia las letras del jugador
+        int cambiosLetras = cambiarLetras(letras, cambiosLet, vocales); // Cambia las letras del jugador
 
         if (cambiosLetras == 7){
             // Ofrecer al usuario la opción de cambiar todo el mazo
@@ -547,9 +564,16 @@ void llenarTablero(char letras[7], char tablero[][15], int tableroPuntaje[][15],
             }
 
             // Solicita la palabra que el jugador quiere ingresar
-            printf("\n\033[1;36m¿Cual palabra quiere ingresar en el tablero? \033[0m\n");
+            printf("\n\033[1;36m¿Cual palabra quiere ingresar en el tablero? Ingresa un '.' si quieres cambiar todas tus letras (no pierdes turno)\033[0m\n");
             while (getchar() != '\n'); // Limpiar el buffer
-            gets(palabraIngresada); // Leer la palabra ingresada
+            scanf(" %s", palabraIngresada);
+
+            if (palabraIngresada[0] == '.'){
+                printf("\033[1;33mCambiaste las letras sin perder turno.\033[0m\n");
+                cambiarLetras(letras, cambiosLet, vocales); // Cambia las letras
+                continue; // Regresa al inicio del bucle sin incrementar el turno
+            }
+
             tamano = strlen(palabraIngresada); // Obtener el tamaño de la palabra
 
             // Verifica que la palabra no sea mayor de 8 letras
